@@ -337,6 +337,7 @@ public class WavFile2
 		{
 			if (bufferPointer == BUFFER_SIZE)
 			{
+				oStream.write(buffer, 0, BUFFER_SIZE);
 				bufferPointer = 0;
 			}
 
