@@ -45,13 +45,13 @@ public class StreamDenoisingExample {
             int numFrames = (int)wavFile.getNumFrames();
             int samples = numFrames * numChannels;
 
-            int splitFrames = numFrames;
+            int splitFrames = 44100;
             double[] buffer = new double[samples];
-            double[] buffer2 = new double[samples];
+            double[] buffer2 = new double[splitFrames * numChannels];
             double[][] splitChannel = new double[numChannels][splitFrames];
 
-            int framesRead;
-            framesRead = wavFile.readFrames(buffer, numFrames);
+//            int framesRead;
+//            framesRead = wavFile.readFrames(buffer2, splitFrames);
             
 //            int pointer = 0;
 //            byte hoge[] = new byte[4];
@@ -65,8 +65,7 @@ public class StreamDenoisingExample {
 //            	pointer += 4;
 //            }
             
-            // Close the wavFile
-            wavFile.close();
+            // Close the wavFile            
             double[] enhancedSingle;
             double[][] enhanced;
 
@@ -77,39 +76,46 @@ public class StreamDenoisingExample {
                 enhancedSingle =  denoiser.process(buffer);
                 output.writeFrames(enhancedSingle, enhancedSingle.length);
             } else {
-				for (int i = 0; i < numFrames; i++) {
-					for (int k = 0; k < numChannels; k++) {
-						splitChannel[k][i] = buffer[i * numChannels + k];
-					}
-				}
-				enhanced = denoiser.process(splitChannel);
-
-				for (int i = 0; i < enhanced[0].length; i++) {
-					for (int k = 0; k < numChannels; k++) {
-						buffer[i * numChannels + k] = enhanced[k][i];
-					}
-
-				}				
-				output.writeFrames(buffer, buffer.length);
+//				for (int i = 0; i < numFrames; i++) {
+//					for (int k = 0; k < numChannels; k++) {
+//						splitChannel[k][i] = buffer[i * numChannels + k];
+//					}
+//				}
+//				enhanced = denoiser.process(splitChannel);
+//
+//				for (int i = 0; i < enhanced[0].length; i++) {
+//					for (int k = 0; k < numChannels; k++) {
+//						buffer[i * numChannels + k] = enhanced[k][i];
+//					}
+//
+//				}				
+//				output.writeFrames(buffer, buffer.length);
 				
-//            	for(int j=0;j < numFrames;j+=splitFrames){
-//            		for (int i = j; i < j+splitFrames; i++) {
-//            			for (int k = 0; k < numChannels; k++) {
-//            				splitChannel[k][i-j] = buffer[i * numChannels + k];
-//            			}
-//            		}
-//            		enhanced = denoiser.process(splitChannel);
-//            		//System.out.println("hoge");
-//            		for (int i = 0; i < enhanced[0].length; i++) {
-//            			for (int k = 0; k < numChannels; k++) {
-//            				buffer2[i * numChannels + k] = (byte)enhanced[k][i];
-//            			}
-//            		}
-//            		//sourceDataLine.write(buffer2,0,buffer2.length);
-//            		output.writeFrames(buffer2, buffer2.length);
- //           	}
- 
-            }
+            	for(int j=0;j < numFrames;j+=splitFrames){
+                    int framesRead;
+                    framesRead = wavFile.readFrames(buffer2, splitFrames);
+                    
+            		for (int i = j; i < j+splitFrames; i++) {
+            			for (int k = 0; k < numChannels; k++) {
+//            				System.out.println("i " + Integer.toString(i));
+//            				System.out.println("i-j" + Integer.toString(i-j));
+//            				System.out.println("i * numChannels + k" + Integer.toString(i * numChannels + k));            				
+            				if(i * numChannels + k < buffer2.length){
+            					splitChannel[k][i-j] = buffer2[i * numChannels + k];            					
+            				}            				
+            			}
+            		}
+            		enhanced = denoiser.process(splitChannel);
+             		for (int i = 0; i < enhanced[0].length; i++) {
+            			for (int k = 0; k < numChannels; k++) {
+            				buffer2[i * numChannels + k] = (byte)enhanced[k][i];
+            			}
+            		}
+            		//sourceDataLine.write(buffer2,0,buffer2.length);
+            		output.writeFrames(buffer2, splitFrames);
+            	}
+             }
+            wavFile.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

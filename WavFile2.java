@@ -337,18 +337,6 @@ public class WavFile2
 		{
 			if (bufferPointer == BUFFER_SIZE)
 			{
-//				byte tmp[] = new byte[4];
-//				for(int i=0;i<BUFFER_SIZE;i+=4){
-//					tmp[0] = buffer[i];
-//					tmp[1] = buffer[i+1];
-//					tmp[2] = buffer[i+2];
-//					tmp[3] = buffer[i+3];
-//					sourceDataLine.write(tmp, 0, 4);
-//					
-//				}
-				
-				//sourceDataLine.write(buffer, 0, BUFFER_SIZE);				
-				//oStream.write(buffer, 0, BUFFER_SIZE);
 				bufferPointer = 0;
 			}
 
@@ -361,7 +349,6 @@ public class WavFile2
 		if(bufferPointer >= 2){		
 			tmp[0] = buffer[bufferPointer-2];
 			tmp[1] = buffer[bufferPointer-1];
-			//sourceDataLine.write(tmp, 0, 4);
 		}
 		return tmp;
 	}
