@@ -24,3 +24,5 @@ var ia=[ib,Na];var ja=[jb,Va,Pa,Oa];return{_rnnoise_init:sa,setThrew:oa,_fflush:
 if (typeof module === "object" && module.exports) {
   module['exports'] = NoiseModule;
 };
+
+module.exports.NoiseModule = NoiseModule;
