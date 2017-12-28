@@ -240,8 +240,6 @@ function getMicrophoneAccess() {
       buffer[i] = Module.HEAPF32[(ptr >> 2) + i] / 32768;
     }
   }
-  
-  var frameBuffer = [];
 
   processingNode.onaudioprocess = function (e) {
     var input = e.inputBuffer.getChannelData(0);
@@ -280,9 +278,9 @@ function getMicrophoneAccess() {
       }
     }
     // Not enough data, exit early, etherwise the AnalyserNode returns NaNs.
-    if (outputBuffer.length < bufferSize) {
-      return;
-    }
+    // if (outputBuffer.length < bufferSize) {
+    //   return;
+    // }
     // Flush output buffer.
     for (var i = 0; i < bufferSize; i++) {
       output[i] = outputBuffer.shift();
@@ -462,26 +460,27 @@ function Wave() {
 util.inherits(Wave, Transform);
 
 Wave.prototype._transform = function(chunk, encoding, callback) {
-	var format = chunk[0].toString() + chunk[1].toString() + chunk[2].toString() + chunk[3].toString();
-	if(chunk.readUInt16LE(22) == 1){
-	    this.channel = 'mono';
-	}else{
-	    this.channel = 'stereo';
+    var format = chunk[0].toString() + chunk[1].toString() + chunk[2].toString() + chunk[3].toString();
+    if(chunk.readUInt16LE(22) == 1){
+	this.channel = 'mono';
+    }else{
+	this.channel = 'stereo';
+    }
+    this.size = chunk.readUInt16LE(32);
+
+
+    if(format == 'RIFF'){
+	this.channel = channel;
+	this.blockSize = size;
+	for(var i = 44; i<chunk.length; i++){
+	    this.push(chunk[i]);
 	}
-	this.size = chunk.readUInt16LE(32);
+    }else{
+	this.push(chunk);
+    }
 
-
-	if(format == 'RIFF'){
-	    this.channel = channel;
-	    this.blockSize = size;
-	    for(var i = 44; i<chunk.length; i++){
-		this.push(chunk[i]);
-	    }
-	}else{
-	    this.push(chunk);
-	}
-
-	callback();
+    //console.log(chunk.length);
+    callback();
 }
 
 
@@ -490,34 +489,47 @@ Wave.prototype._transform = function(chunk, encoding, callback) {
 initializeNoiseSuppressionModule();
 suppressNoise = true;
 
-var inputBuffer = [];
-var outputBuffer = [];
-var bufferSize = 16384;
+var all_buffersize = 10584000;
+var bufferSize = 10584000 - 44;
+var inputBuffer = new Array(bufferSize);
+var outputBuffer = new Array(bufferSize);
+
+//var bufferSize = 16384;
+
 //var sampleRate = audioContext.sampleRate;
 
-var ifs = fs.createReadStream('../asakai60.wav');
-//var reader = new wav.Reader();
-var ofs = fs.createWriteStream('./asakai60_transform.wav');
-
-var wav = new Wave();
-
-function read_handler(d){
-    var ary = [];
-    for(var i = 0; i < d.length/wav.blockSize; i++){
-	ary.push(d.readUInt16LE(wav.blockSize * i));
+//var ifs = fs.createReadStream('../asakai60.wav');
+var tmpBuffer = fs.readFileSync('../asakai60.wav');
+var headerBuf = [];
+for(var i = 0; i < all_buffersize; i++){
+    if(i<=43){
+	headerBuf.push(tmpBuffer[i]);
+    }else{
+	inputBuffer.push(tmpBuffer[i]);
     }
-    console.log(ary);
 }
 
-//ifs.pipe(wav).pipe(ofs);
+//var reader = new wav.Reader();
+//var ofs = fs.createWriteStream('./asakai60_transform.wav');
 
-ifs.pipe(wav);
-wav.on('data', read_handler);
+denoise_main(inputBuffer, outputBuffer);
+
+fs.writeFileSync('./asakai60_transform.wav', headerBuf);
+fs.writeFileSync('./asakai60_transform.wav', outputBuffer);
+
+// var wav = new Wave();
+
+// function read_handler(d){
+//     var ary = [];
+//     for(var i = 0; i < d.length/wav.blockSize; i++){
+// 	ary.push(d.readUInt16LE(wav.blockSize * i));
+//     }
+// //    console.log(ary);
+// }
 
 
-
-
-
+// ifs.pipe(wav);
+// wav.on('data', read_handler);
 
 
 // // the "format" event gets emitted at the end of the WAVE header
@@ -537,37 +549,42 @@ wav.on('data', read_handler);
 
 // ifs.pipe(reader);
 
-function remove_handler () {
-    var input = e.inputBuffer.getChannelData(0);
-    var output = e.outputBuffer.getChannelData(0);
+function denoise_main(input, output) {
+    // var input = e.inputBuffer.getChannelData(0);
+    // var output = e.outputBuffer.getChannelData(0);
 
-    // Drain input buffer.
-    for (var i = 0; i < bufferSize; i++) {
-      inputBuffer.push(input[i]);
-    }
+    var out_buf = [];
+    var frameBuffer = new Array(480);
 
     while (inputBuffer.length >= 480) {
       for (var i = 0; i < 480; i++) {
-        frameBuffer[i] = inputBuffer.shift();
+        frameBuffer[i] = input.shift();
       }
       // Process Frame
       if (suppressNoise) {
         removeNoise(frameBuffer);
       }
       for (var i = 0; i < 480; i++) {
-        outputBuffer.push(frameBuffer[i]);
+        out_buf.push(frameBuffer[i]);
       }
-    }
-    // Not enough data, exit early, etherwise the AnalyserNode returns NaNs.
-    if (outputBuffer.length < bufferSize) {
-      return;
     }
     // Flush output buffer.
     for (var i = 0; i < bufferSize; i++) {
-      output[i] = outputBuffer.shift();
+      output[i] = out_buf.shift();
     }
 }
 
+function removeNoise(buffer) {
+    var ptr = Module.ptr;
+    var st = Module.st;
+    for (var i = 0; i < 480; i++) {
+      Module.HEAPF32[(ptr >> 2) + i] = buffer[i] * 32768;
+    }
+    Module._rnnoise_process_frame(st, ptr, ptr);
+    for (var i = 0; i < 480; i++) {
+      buffer[i] = Module.HEAPF32[(ptr >> 2) + i] / 32768;
+    }
+}
 
 // Disable demo when changing tabs.
 
