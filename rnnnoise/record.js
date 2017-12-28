@@ -489,8 +489,8 @@ Wave.prototype._transform = function(chunk, encoding, callback) {
 initializeNoiseSuppressionModule();
 suppressNoise = true;
 
-var all_buffersize = 10584000;
-var bufferSize = 10584000 - 44;
+var all_buffersize = 5292000;
+var bufferSize = 5292000 - 44;
 var inputBuffer = new Array(bufferSize);
 var outputBuffer = new Array(bufferSize);
 
@@ -505,12 +505,19 @@ for(var i = 0; i < all_buffersize; i++){
     if(i<=43){
 	headerBuf.push(tmpBuffer[i]);
     }else{
+	i+=1;
 	inputBuffer.push(tmpBuffer[i]);
+	inputBuffer.push(tmpBuffer[i+1]);
     }
 }
 
+
 //var reader = new wav.Reader();
 //var ofs = fs.createWriteStream('./asakai60_transform.wav');
+
+//change channnel num to 1
+headerBuf[22] = 1;
+headerBuf[23] = 0;
 
 denoise_main(inputBuffer, outputBuffer);
 
@@ -556,21 +563,23 @@ function denoise_main(input, output) {
     var out_buf = [];
     var frameBuffer = new Array(480);
 
-    while (inputBuffer.length >= 480) {
-      for (var i = 0; i < 480; i++) {
-        frameBuffer[i] = input.shift();
-      }
-      // Process Frame
-      if (suppressNoise) {
-        removeNoise(frameBuffer);
-      }
-      for (var i = 0; i < 480; i++) {
-        out_buf.push(frameBuffer[i]);
-      }
+    var rest = bufferSize;
+    while (rest >= 480) {
+	for (var i = 0; i < 480; i++) {
+            frameBuffer[i] = input.shift();
+	}
+	// Process Frame
+	if (suppressNoise) {
+            removeNoise(frameBuffer);
+	}
+	for (var i = 0; i < 480; i++) {
+            out_buf.push(frameBuffer[i]);
+	}
+	rest -= 480;
     }
     // Flush output buffer.
     for (var i = 0; i < bufferSize; i++) {
-      output[i] = out_buf.shift();
+	output[i] = out_buf.shift();
     }
 }
 
