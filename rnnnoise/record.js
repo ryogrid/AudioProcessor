@@ -523,13 +523,17 @@ for(var i = 0; i < all_buffersize; i++){
 	    buf_offset = 8 * frame_idx;
 //	    console.log(buf_offset);
 	    inputBuffer[frame_idx] = dataview.getFloat32(buf_offset, true);
-	    frame_idx += 1;
+      if(inputBuffer[frame_idx] != 0){
+        console.log(inputBuffer[frame_idx]);
+      }
+      frame_idx += 1;
 	}
     }
     if(i==43){
 	var dv_buf = new ArrayBuffer(bufferSize);
 	for(var j=0;j<bufferSize;j++){
 	    dv_buf[j] = tmpBuffer[43+j];
+      //console.log(dv_buf[j]);
 	}
 	dataview = new DataView(dv_buf);
     }
@@ -594,6 +598,7 @@ wstream.write(headerBuf, (err) => {
     console.log('The file has been saved!');
 
     wstream.write(new Buffer(write_buf.buffer));
+    //wstream.write(data_buf);
 });
 
 //wstream.write(tmpBuffer);
@@ -661,7 +666,7 @@ function denoise_main(input, output) {
 	    outbuf_counter += 1;
 	}
 	rest -= 480;
-	console.log(rest);
+	//console.log(rest);
     }
     // Flush output buffer.
     for (var i = 0; i < frame_num - rest; i++) {
