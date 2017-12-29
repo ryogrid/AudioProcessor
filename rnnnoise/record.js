@@ -504,7 +504,11 @@ outputBuffer.fill(0);
 
 //var ifs = fs.createReadStream('../asakai32.wav');
 
+// var headerBuf = new ArrayBuffer(44);
+// var data_buf = new ArrayBuffer(frame_num * 8);
 var headerBuf = new ArrayBuffer(44);
+var data_buf = new ArrayBuffer(frame_num * 8);
+
 var tmpBuffer = fs.readFileSync('./asakai32.wav');
 console.log("file bytes:" + tmpBuffer.length.toString());
 var dataview;
@@ -514,6 +518,7 @@ for(var i = 0; i < all_buffersize; i++){
     if(i<=43){
 	headerBuf[i] = tmpBuffer[i];
     }else{
+	data_buf[i-43] = tmpBuffer[i];
 	if(frame_idx < frame_num){
 	    buf_offset = 8 * frame_idx;
 //	    console.log(buf_offset);
@@ -553,15 +558,21 @@ denoise_main(inputBuffer, outputBuffer);
 // hoge[0] = 1;
 // fs.writeFileSync('./asakai32_transform.wav', hoge);
 
-fs.writeFile('./asakai32_transform.wav', headerBuf, (err) => {
-    if (err) throw err;
-    console.log('The file has been saved!');
-});
-fs.writeFile('./asakai32_transform.wav', outputBuffer, (err) => {
-    if (err) throw err;
-    console.log('The file has been saved!');
-});
 
+
+// fs.writeFile('./asakai32_transform.wav', headerBuf, (err) => {
+//     if (err) throw err;
+//     console.log('The file has been saved!');
+// });
+// //    fs.writeFile('./asakai32_transform.wav', outputBuffer, (err) => {
+// fs.writeFile('./asakai32_transform.wav', data_buf, (err) => {
+//     if (err) throw err;
+//     console.log('The file has been saved!');
+// });
+
+var wstream = fs.createWriteStream('./asakai32_transform.wav');
+wstream.write(new Buffer(headerBuf));
+wstream.write(new Buffer(data_buf));
 
 
 //console.log("len:" + dv.buffer.length.toString());
