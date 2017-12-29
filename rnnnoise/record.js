@@ -506,8 +506,8 @@ outputBuffer.fill(0);
 
 // var headerBuf = new ArrayBuffer(44);
 // var data_buf = new ArrayBuffer(frame_num * 8);
-var headerBuf = new ArrayBuffer(44);
-var data_buf = new ArrayBuffer(frame_num * 8);
+var headerBuf = new Buffer(44);
+var data_buf = new Buffer(frame_num * 8);
 
 var tmpBuffer = fs.readFileSync('./asakai32.wav');
 console.log("file bytes:" + tmpBuffer.length.toString());
@@ -571,8 +571,15 @@ denoise_main(inputBuffer, outputBuffer);
 // });
 
 var wstream = fs.createWriteStream('./asakai32_transform.wav');
-wstream.write(new Buffer(headerBuf));
-wstream.write(new Buffer(data_buf));
+wstream.write(headerBuf, (err) => {
+    if (err) throw err;
+    console.log('The file has been saved!');
+
+    wstream.write(data_buf);    
+});                                                    ;
+
+//wstream.write(tmpBuffer);
+//console.log(tmpBuffer.constructor);
 
 
 //console.log("len:" + dv.buffer.length.toString());
