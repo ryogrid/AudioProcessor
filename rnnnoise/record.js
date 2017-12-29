@@ -542,7 +542,7 @@ for(var i = 0; i < all_buffersize; i++){
 //var reader = new wav.Reader();
 //var ofs = fs.createWriteStream('./asakai60_transform.wav');
 
-//change channnel num to 1
+//change channnel num to 1 (kore yaru to oto ga nobiru)
 headerBuf[22] = 1;
 headerBuf[23] = 0;
 
@@ -570,13 +570,21 @@ denoise_main(inputBuffer, outputBuffer);
 //     console.log('The file has been saved!');
 // });
 
+// var wstream = fs.createWriteStream('./asakai32_transform.wav');
+// wstream.write(headerBuf, (err) => {
+//     if (err) throw err;
+//     console.log('The file has been saved!');
+
+//     wstream.write(data_buf);    
+// });
+
 var wstream = fs.createWriteStream('./asakai32_transform.wav');
 wstream.write(headerBuf, (err) => {
     if (err) throw err;
     console.log('The file has been saved!');
 
-    wstream.write(data_buf);    
-});                                                    ;
+    wstream.write(outputBuffer);
+});
 
 //wstream.write(tmpBuffer);
 //console.log(tmpBuffer.constructor);
