@@ -4,7 +4,7 @@ var NOISE = require("./noise");
 require("./demo");
 require("./ffmap");
 var fs = require('fs');
-var wav = require('wav');
+//var wav = require('wav');
 var Transform = require('stream').Transform;
 var util = require('util');
 
@@ -222,7 +222,7 @@ function getMicrophoneAccess() {
     var output = e.outputBuffer.getChannelData(0);
     for (var i = 0; i < input.length; i++) {
       if (addNoise) {
-        output[i] = input[i] + (Math.random() / 100);  
+        output[i] = input[i] + (Math.random() / 100);
       } else {
         output[i] = input[i];
       }
@@ -419,7 +419,7 @@ function liveNoiseSuppression(type, item) {
   if (type == 0) {
     stopMicrophone();
     return;
-  }    
+  }
   getMicrophoneAccess();
   initializeNoiseSuppressionModule();
   stopStreaming();
@@ -523,7 +523,7 @@ for(var i = 0; i < all_buffersize; i++){
 	    buf_offset = 8 * frame_idx;
 //	    console.log(buf_offset);
 	    inputBuffer[frame_idx] = dataview.getFloat32(buf_offset, true);
-	    frame_idx += 1;	    
+	    frame_idx += 1;
 	}
     }
     if(i==43){
@@ -543,10 +543,20 @@ for(var i = 0; i < all_buffersize; i++){
 //var ofs = fs.createWriteStream('./asakai60_transform.wav');
 
 //change channnel num to 1 (kore yaru to oto ga nobiru)
-headerBuf[22] = 1;
-headerBuf[23] = 0;
+//headerBuf[22] = 1;
+//headerBuf[23] = 0;
+
+//var dv_header = new DataView(headerBuf);
+//dv_header.setUint16(22, 1, true);
+//headerBuf = new Buffer(dv_header.buffer);
 
 denoise_main(inputBuffer, outputBuffer);
+
+var write_buf = new Float32Array(outputBuffer.length*2);
+for(var i=0;i<outputBuffer.length;i++){
+  write_buf[i*2] = outputBuffer[i];
+  write_buf[i*2+1] = outputBuffer[i];
+}
 
 // var av = new ArrayBuffer(outputBuffer.length * 4);
 // var dv = new DataView(av);
@@ -575,7 +585,7 @@ denoise_main(inputBuffer, outputBuffer);
 //     if (err) throw err;
 //     console.log('The file has been saved!');
 
-//     wstream.write(data_buf);    
+//     wstream.write(data_buf);
 // });
 
 var wstream = fs.createWriteStream('./asakai32_transform.wav');
@@ -583,7 +593,7 @@ wstream.write(headerBuf, (err) => {
     if (err) throw err;
     console.log('The file has been saved!');
 
-    wstream.write(outputBuffer);
+    wstream.write(new Buffer(write_buf.buffer));
 });
 
 //wstream.write(tmpBuffer);
@@ -674,8 +684,8 @@ function removeNoise(buffer) {
 
 // Disable demo when changing tabs.
 
-// var hidden, visibilityChange; 
-// if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support 
+// var hidden, visibilityChange;
+// if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support
 //   hidden = "hidden";
 //   visibilityChange = "visibilitychange";
 // } else if (typeof document.msHidden !== "undefined") {
@@ -692,6 +702,6 @@ function removeNoise(buffer) {
 // }
 // // Warn if the browser doesn't support addEventListener or the Page Visibility API
 // if (typeof document.addEventListener !== "undefined" && typeof document[hidden] !== "undefined") {
-//   // Handle page visibility change   
+//   // Handle page visibility change
 //   document.addEventListener(visibilityChange, handleVisibilityChange, false);
 // }
