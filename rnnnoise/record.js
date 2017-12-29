@@ -489,34 +489,50 @@ Wave.prototype._transform = function(chunk, encoding, callback) {
 initializeNoiseSuppressionModule();
 suppressNoise = true;
 
-var all_buffersize = 2646000;
+
 //var bufferSize = 2646000 - 44;
-var bufferSize = 2646000;
-var inputBuffer = new Float32Array(bufferSize);
+var frame_num = 2646000;
+var bufferSize = frame_num * 8;
+var all_buffersize = bufferSize + 44;
+var inputBuffer = new Float32Array(frame_num);
 inputBuffer.fill(0);
-var outputBuffer = new Float32Array(bufferSize);
+var outputBuffer = new Float32Array(frame_num);
 outputBuffer.fill(0);
 //var bufferSize = 16384;
 
 //var sampleRate = audioContext.sampleRate;
 
-//var ifs = fs.createReadStream('../asakai60.wav');
+//var ifs = fs.createReadStream('../asakai32.wav');
 
-var headerBuf = new Float32Array(44);
-// var tmpBuffer = fs.readFileSync('../asakai60.wav');
-// for(var i = 0; i < all_buffersize; i++){
-//     if(i<=43){
-// 	headerBuf.push(tmpBuffer[i]);
-//     }else{
-// 	i+=1;
-// 	inputBuffer.push(tmpBuffer[i]);
-// 	inputBuffer.push(tmpBuffer[i+1]);
-//     }
-// }
-
-for(var i = 0; i < bufferSize; i++){
-    inputBuffer[i] = Math.random() * (1 + 1 - (-1) ) + (-1);
+var headerBuf = new ArrayBuffer(44);
+var tmpBuffer = fs.readFileSync('./asakai32.wav');
+console.log("file bytes:" + tmpBuffer.length.toString());
+var dataview;
+var frame_idx = 0;
+var buf_offset = 0;
+for(var i = 0; i < all_buffersize; i++){
+    if(i<=43){
+	headerBuf[i] = tmpBuffer[i];
+    }else{
+	if(frame_idx < frame_num){
+	    buf_offset = 8 * frame_idx;
+//	    console.log(buf_offset);
+	    inputBuffer[frame_idx] = dataview.getFloat32(buf_offset, true);
+	    frame_idx += 1;	    
+	}
+    }
+    if(i==43){
+	var dv_buf = new ArrayBuffer(bufferSize);
+	for(var j=0;j<bufferSize;j++){
+	    dv_buf[j] = tmpBuffer[43+j];
+	}
+	dataview = new DataView(dv_buf);
+    }
 }
+
+// for(var i = 0; i < bufferSize; i++){
+//     inputBuffer[i] = Math.random() * (1 + 1 - (-1) ) + (-1);
+// }
 
 //var reader = new wav.Reader();
 //var ofs = fs.createWriteStream('./asakai60_transform.wav');
@@ -527,8 +543,30 @@ headerBuf[23] = 0;
 
 denoise_main(inputBuffer, outputBuffer);
 
-fs.writeFileSync('./asakai60_transform.wav', headerBuf);
-fs.writeFileSync('./asakai60_transform.wav', outputBuffer);
+// var av = new ArrayBuffer(outputBuffer.length * 4);
+// var dv = new DataView(av);
+// for(var i=0; i<frame_num;i++){
+//     dv.setFloat32(i * 4, outputBuffer[i], true);
+// }
+
+// var hoge = new ArrayBuffer(1);
+// hoge[0] = 1;
+// fs.writeFileSync('./asakai32_transform.wav', hoge);
+
+fs.writeFile('./asakai32_transform.wav', headerBuf, (err) => {
+    if (err) throw err;
+    console.log('The file has been saved!');
+});
+fs.writeFile('./asakai32_transform.wav', outputBuffer, (err) => {
+    if (err) throw err;
+    console.log('The file has been saved!');
+});
+
+
+
+//console.log("len:" + dv.buffer.length.toString());
+//console.log("outputBuffer.buffer.length:" + outputBuffer.buffer.length.toString());
+
 
 // var wav = new Wave();
 
@@ -569,7 +607,7 @@ function denoise_main(input, output) {
     var out_buf = new Float32Array(bufferSize);
     var frameBuffer = new Float32Array(480);
 
-    var rest = bufferSize;
+    var rest = frame_num;
     var input_counter  = 0;
     var outbuf_counter = 0;
     while (rest >= 480) {
@@ -590,7 +628,7 @@ function denoise_main(input, output) {
 	console.log(rest);
     }
     // Flush output buffer.
-    for (var i = 0; i < bufferSize - rest; i++) {
+    for (var i = 0; i < frame_num - rest; i++) {
 //	output[i] = out_buf.shift();
 	output[i] = out_buf[i];
     }
