@@ -518,7 +518,7 @@ for(var i = 0; i < all_buffersize; i++){
     if(i<=43){
 	headerBuf[i] = tmpBuffer[i];
     }else{
-	data_buf[i-43] = tmpBuffer[i];
+	data_buf[i-44] = tmpBuffer[i];
 	if(frame_idx < frame_num){
 	    buf_offset = 8 * frame_idx;
 //	    console.log(buf_offset);
