@@ -27,6 +27,10 @@ function initializeNoiseSuppressionModule() {
   Module.ptr = Module._malloc(480 * 4);
 }
 
+function zeroPadding(num_str,length){
+    return ('0000000000' + num_str).slice(-length);
+}
+
 initializeNoiseSuppressionModule();
 suppressNoise = true;
 
@@ -55,6 +59,12 @@ for(var i = 0; i < all_buffersize; i++){
 	if(frame_idx < frame_num){
 	    buf_offset = 8 * frame_idx;
 //	    console.log(buf_offset);
+      //var b1 = zeroPadding(tmpBuffer[44+buf_offset].toString(2),8);
+      //var b2 = zeroPadding(tmpBuffer[44+buf_offset+1].toString(2),8);
+      //var b3 = zeroPadding(tmpBuffer[44+buf_offset+2].toString(2),8);
+      //var b4 = zeroPadding(tmpBuffer[44+buf_offset+3].toString(2),8);
+      //console.log(b4 + b3 + b2 + b1); //little endian
+      //console.log(b1 + b2 + b3 + b4);
 	    inputBuffer[frame_idx] = dataview.getFloat32(buf_offset, true);
       if(inputBuffer[frame_idx] != 0){
         console.log(inputBuffer[frame_idx]);
@@ -80,11 +90,21 @@ for(var i=0;i<outputBuffer.length;i++){
   write_buf[i*2+1] = outputBuffer[i];
 }
 
+// var write_bbuf = new Buffer(frame_num*8);
+// for(var i=0;i<frame_num*8;i+=4){
+//     write_bbuf[i] = write_buf.buffer[i+3];
+//     write_bbuf[i+1] = write_buf.buffer[i+2];
+//     write_bbuf[i+2] = write_buf.buffer[i+1];
+//     write_bbuf[i+3] = write_buf.buffer[i];
+// }
+
+
 var wstream = fs.createWriteStream('./asakai32_transform.wav');
 wstream.write(headerBuf, (err) => {
     if (err) throw err;
     console.log('The file has been saved!');
 
+    //wstream.write(write_bbuf);
     wstream.write(new Buffer(write_buf.buffer));
     //wstream.write(data_buf);
 });
