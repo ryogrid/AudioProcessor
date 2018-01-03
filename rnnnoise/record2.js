@@ -46,7 +46,7 @@ outputBuffer.fill(0);
 var headerBuf = new Buffer(44);
 var data_buf = new Buffer(frame_num * 4);
 
-var tmpBuffer = fs.readFileSync('./asakai32.wav',"binary");
+var tmpBuffer = fs.readFileSync('./asakai60.wav',"binary");
 
 //var dv_buf = new ArrayBuffer(bufferSize);
 
@@ -103,9 +103,9 @@ for(var i=0;i<frame_num;i++){
     val = -9223372036854775807 + diff;
   }
   inputBuffer[i] = floatOffset + val / floatScale;
-  if(inputBuffer[i] != 0){
-    console.log(inputBuffer[i]);
-  }
+  // if(inputBuffer[i] != 0){
+  //   console.log(inputBuffer[i]);
+  // }
 }
 
 
@@ -120,10 +120,32 @@ denoise_main(inputBuffer, outputBuffer);
 //   console.log(b4 + b3 + b2 + b1); //little endian
 // }
 
-var write_buf = new Float32Array(outputBuffer.length*2);
+// var write_buf = new Float32Array(outputBuffer.length*2);
+// for(var i=0;i<outputBuffer.length;i++){
+//   write_buf[i*2] = outputBuffer[i];
+//   write_buf[i*2+1] = outputBuffer[i];
+// }
+
+//9007199254740991 //Number.MAX_SAFE_INTEGER
+floatScale = 9223372036854775807 >> (64 - 12);
+var write_buf = new Buffer(frame_num*2);
 for(var i=0;i<outputBuffer.length;i++){
-  write_buf[i*2] = outputBuffer[i];
-  write_buf[i*2+1] = outputBuffer[i];
+  var gen = Math.floor(floatScale * outputBuffer[i]);
+  //console.log(outputBuffer[i]);
+  console.log(gen);
+  for (var b=0;b<2;b++){
+			write_buf[i*2+b] = gen & 0xFF;
+			gen >>= 8;
+	}
+}
+var write_buf2 = new Buffer(frame_num*4);
+var buf_pointer = 0;
+for(var i=0;i<write_buf.length;i+=2){
+  write_buf2[buf_pointer] = write_buf[i];
+  write_buf2[buf_pointer+1] = write_buf[i+1];
+  write_buf2[buf_pointer+2] = write_buf[i];
+  write_buf2[buf_pointer+3] = write_buf[i+1];
+  buf_pointer+=4;
 }
 
 // var write_buf = new Float32Array(inputBuffer.length*2);
@@ -147,8 +169,9 @@ wstream.write(headerBuf, (err) => {
     console.log('The file has been saved!');
 
     //wstream.write(write_bbuf);
-    wstream.write(new Buffer(write_buf.buffer));
+    //wstream.write(new Buffer(write_buf.buffer));
     //wstream.write(data_buf);
+    wstream.write(write_buf2);
 });
 
 var suppressNoise = true;
