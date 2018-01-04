@@ -73,10 +73,10 @@ for(var i = 0; i < all_buffersize; i++){
       //console.log(b4 + b3 + b2 + b1); //little endian
       //console.log(b1 + b2 + b3 + b4);
                                   //dataview.getFloat32(buf_offset, true);
-	       inputBuffer[frame_idx] = getFloat16(dataview, buf_offset);
-         // if(inputBuffer[frame_idx] != 0){
-         //   console.log(inputBuffer[frame_idx]);
-         // }
+	       inputBuffer[frame_idx] = getFloat16(dataview, buf_offset, true);
+         if(inputBuffer[frame_idx] != 0){
+            console.log(inputBuffer[frame_idx]);
+         }
          frame_idx += 1;
        }
     }
@@ -145,7 +145,7 @@ for(var i=0;i<outputBuffer.length;i++){
   var gen = Math.round(floatScale * outputBuffer[i]);
   //var gen = Math.round(floatScale * outputBuffer[i]);
   //console.log(outputBuffer[i]);
-  console.log(gen);
+  //console.log(gen);
   for (var b=0;b<2;b++){
 			write_buf[i*2+b] = gen & 0xFF;
 			gen >>= 8;
