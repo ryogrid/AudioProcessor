@@ -4,6 +4,7 @@ var NOISE = require("./noise");
 require("./demo");
 require("./ffmap");
 var fs = require('fs');
+const { Float16Array, getFloat16, setFloat16, hfround } = require("@petamoriken/float16");
 
 var Module = null;
 
@@ -36,7 +37,7 @@ suppressNoise = true;
 
 //var bufferSize = 2646000 - 44;
 var frame_num = 2646000;
-var bufferSize = frame_num * 8;
+var bufferSize = frame_num * 4;
 var all_buffersize = bufferSize + 44;
 var inputBuffer = new Float32Array(frame_num);
 inputBuffer.fill(0);
@@ -48,7 +49,7 @@ var data_buf = new Buffer(frame_num * 4);
 
 var tmpBuffer = fs.readFileSync('./asakai60.wav',"binary");
 
-//var dv_buf = new ArrayBuffer(bufferSize);
+var dv_buf = new ArrayBuffer(bufferSize);
 
 // for(var i=0;i<tmpBuffer.length;i++){
 //   tmpBuffer[i] = 255 - tmpBuffer.charCodeAt(i);
@@ -59,53 +60,55 @@ var frame_idx = 0;
 var buf_offset = 0;
 for(var i = 0; i < all_buffersize; i++){
     if(i<=43){
-	headerBuf[i] = tmpBuffer[i];
+	     headerBuf[i] = tmpBuffer[i];
     }else{
-	data_buf[i-44] = tmpBuffer[i];
-// 	if(frame_idx < frame_num){
-// 	    buf_offset = 8 * frame_idx;
-// //	    console.log(buf_offset);
-//       //var b1 = zeroPadding(tmpBuffer[44+buf_offset].toString(2),8);
-//       //var b2 = zeroPadding(tmpBuffer[44+buf_offset+1].toString(2),8);
-//       //var b3 = zeroPadding(tmpBuffer[44+buf_offset+2].toString(2),8);
-//       //var b4 = zeroPadding(tmpBuffer[44+buf_offset+3].toString(2),8);
-//       //console.log(b4 + b3 + b2 + b1); //little endian
-//       //console.log(b1 + b2 + b3 + b4);
-// 	    inputBuffer[frame_idx] = dataview.getFloat32(buf_offset, true);
-//       if(inputBuffer[frame_idx] != 0){
-//         console.log(inputBuffer[frame_idx]);
-//       }
-//       frame_idx += 1;
-// 	}
-  //   }
-  //   if(i==43){
-	// for(var j=0;j<bufferSize;j++){
-	//     dv_buf[j] = tmpBuffer[44+j];
-  //     //console.log(dv_buf[j]);
-	// }
-	// dataview = new DataView(dv_buf);
+	     data_buf[i-44] = tmpBuffer[i];
+	     if(frame_idx < frame_num){
+	        buf_offset = 4 * frame_idx;
+//	    console.log(buf_offset);
+      //var b1 = zeroPadding(tmpBuffer[44+buf_offset].toString(2),8);
+      //var b2 = zeroPadding(tmpBuffer[44+buf_offset+1].toString(2),8);
+      //var b3 = zeroPadding(tmpBuffer[44+buf_offset+2].toString(2),8);
+      //var b4 = zeroPadding(tmpBuffer[44+buf_offset+3].toString(2),8);
+      //console.log(b4 + b3 + b2 + b1); //little endian
+      //console.log(b1 + b2 + b3 + b4);
+                                  //dataview.getFloat32(buf_offset, true);
+	       inputBuffer[frame_idx] = getFloat16(dataview, buf_offset);
+         // if(inputBuffer[frame_idx] != 0){
+         //   console.log(inputBuffer[frame_idx]);
+         // }
+         frame_idx += 1;
+       }
+    }
+    if(i==43){
+	     for(var j=0;j<bufferSize;j++){
+	        dv_buf[j] = tmpBuffer[44+j];
+          //console.log(dv_buf[j]);
+	     }
+	     dataview = new DataView(dv_buf);
     }
 }
 
-var floatOffset = 0;
-//var floatScale = 1 << (16 - 1);
-var floatScale = 32768;
-for(var i=0;i<frame_num;i++){
-  var val = 0;
-  for(var b=0;b<2;b++){
-    var v = data_buf[i*4+b];
-    if (b < 2-1){
-      v &= 0xFF;
-    }
-    val += v << (b * 8);
-  }
+// var floatOffset = 0;
+// //var floatScale = 1 << (16 - 1);
+// var floatScale = 32768;
+// for(var i=0;i<frame_num;i++){
+//   var val = 0;
+//   for(var b=0;b<2;b++){
+//     var v = data_buf[i*4+b];
+//     if (b < 2-1){
+//       v &= 0xFF;
+//     }
+//     val += v << (b * 8);
+//   }
+  //inputBuffer[i] = floatOffset + val / floatScale;
 
   // if(val > 9223372036854775807){
   //   var diff = val - 9223372036854775807;
   //   val = -9223372036854775807 + diff;
   // }
 
-  inputBuffer[i] = floatOffset + val / floatScale;
+
   //inputBuffer[i] = val;
   // if(val != 0.0){
   //   console.log(inputBuffer[i]);
@@ -115,7 +118,7 @@ for(var i=0;i<frame_num;i++){
   // if(inputBuffer[i] != 0){
   //   console.log(inputBuffer[i]);
   // }
-}
+
 
 
 denoise_main(inputBuffer, outputBuffer);
@@ -136,13 +139,13 @@ denoise_main(inputBuffer, outputBuffer);
 // }
 
 //9007199254740991 //Number.MAX_SAFE_INTEGER
-floatScale = 32767; //9223372036854775807L >> (64 - 12)
+var floatScale = 32767; //9223372036854775807L >> (64 - 12)
 var write_buf = new Buffer(frame_num*2);
 for(var i=0;i<outputBuffer.length;i++){
   var gen = Math.round(floatScale * outputBuffer[i]);
   //var gen = Math.round(floatScale * outputBuffer[i]);
   //console.log(outputBuffer[i]);
-  //console.log(gen);
+  console.log(gen);
   for (var b=0;b<2;b++){
 			write_buf[i*2+b] = gen & 0xFF;
 			gen >>= 8;
