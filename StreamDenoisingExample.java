@@ -7,18 +7,20 @@ public class StreamDenoisingExample {
 
 	public static void main(String[] args) {
 		try {
-			String filename = "asakai60.wav";
+			//System.out.println((long)(Long.MAX_VALUE >> (64 - 12)));
+			
+			String filename = "rnnnoise/asakai60.wav";
 			int pos = filename.lastIndexOf(".");
 			String justName = pos > 0 ? filename.substring(0, pos) : filename;
 
-			// 音声ファイルから入力ストリームを取得する
+			// 髻ｳ螢ｰ繝輔ぃ繧､繝ｫ縺九ｉ蜈･蜉帙せ繝医Μ繝ｼ繝�繧貞叙蠕励☆繧�
 			AudioInputStream linearStream = AudioSystem.getAudioInputStream(new File(filename));
 			AudioFormat linearFormat = linearStream.getFormat();
 			System.out.println(linearFormat);
-			// ソースデータラインを取得する
+			// 繧ｽ繝ｼ繧ｹ繝�繝ｼ繧ｿ繝ｩ繧､繝ｳ繧貞叙蠕励☆繧�
 			DataLine.Info info = new DataLine.Info(SourceDataLine.class, linearFormat);
 			WavFile2.sourceDataLine = (SourceDataLine) AudioSystem.getLine(info);
-			// ソースデータラインをオープンする
+			// 繧ｽ繝ｼ繧ｹ繝�繝ｼ繧ｿ繝ｩ繧､繝ｳ繧偵が繝ｼ繝励Φ縺吶ｋ
 			WavFile2.sourceDataLine.open(linearFormat);
 			WavFile2.sourceDataLine.start();
 
@@ -41,9 +43,11 @@ public class StreamDenoisingExample {
 			int numChannels = wavFile.getNumChannels();
 			int numFrames = (int) wavFile.getNumFrames();
 			int samples = numFrames * numChannels;
-
+			
+			System.out.println("validBits " + validBits);
 			// int splitFrames = 44100 * 5;
-			int splitFrames = numFrames;
+			//int splitFrames = numFrames;
+			int splitFrames = 20000;
 			double[] buffer = new double[samples];
 			double[] buffer2 = new double[splitFrames * numChannels];
 			double[][] splitChannel = new double[numChannels][splitFrames];
@@ -88,11 +92,14 @@ public class StreamDenoisingExample {
 //				 }
 //				 output.writeFrames(buffer, buffer.length);
 
+				int framesRead;
+				framesRead = wavFile.readFrames(buffer, numFrames);				
 				double[] concated_buf = new double[0];
 				for (int j = 0; j < numFrames; j += splitFrames) {
-					int framesRead;
-					framesRead = wavFile.readFrames(buffer2, splitFrames);
-
+					for(int ii=j;ii<j+splitFrames;ii+=2) {
+						buffer2[ii-j] = buffer[ii];
+						buffer2[ii+1-j] = buffer[ii+1];
+					}				
 					for (int i = j; i < j + splitFrames; i++) {
 						for (int k = 0; k < numChannels; k++) {
 							// System.out.println("i " + Integer.toString(i));
@@ -100,8 +107,15 @@ public class StreamDenoisingExample {
 							// Integer.toString(i-j));
 							// System.out.println("i * numChannels + k" +
 							// Integer.toString(i * numChannels + k));
-							if (i * numChannels + k < buffer2.length) {
-								splitChannel[k][i - j] = buffer2[i * numChannels + k];
+							
+//							if (i * numChannels + k < buffer2.length) {
+//								splitChannel[k][i - j] = buffer2[i * numChannels + k];
+//								//System.out.println(splitChannel[k][i - j]);
+//							}
+							if ((i - j) * numChannels + k < buffer2.length) {
+								splitChannel[k][i - j] = buffer2[(i - j) * numChannels + k];
+								///System.out.println((i - j) * numChannels + k);
+								//System.out.println(splitChannel[k][i - j]);
 							}
 						}
 					}
@@ -109,13 +123,15 @@ public class StreamDenoisingExample {
 					//System.out.println(enhanced[0].length);
 					for (int i = 0; i < enhanced[0].length; i++) {
 						for (int k = 0; k < numChannels; k++) {
-							buffer2[i * numChannels + k] = (byte) enhanced[k][i];
+							buffer2[i * numChannels + k] = enhanced[k][i];
+							//System.out.println(buffer2[i * numChannels + k]);
 						}
 					}
-					concated_buf = concat_buf(concated_buf, buffer2);
+					output.writeFrames(buffer2, splitFrames);
+					//concated_buf = concat_buf(concated_buf, buffer2);
 				}
-				System.out.println(concated_buf.length);
-				output.writeFrames(concated_buf, concated_buf.length);
+				//System.out.println(concated_buf.length);
+				//output.writeFrames(concated_buf, concated_buf.length);
 			}
 			wavFile.close();
 		} catch (Exception e) {

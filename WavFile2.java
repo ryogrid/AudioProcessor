@@ -17,7 +17,8 @@ public class WavFile2
 {
 	public static SourceDataLine sourceDataLine = null; 
 	private enum IOState {READING, WRITING, CLOSED};
-	private final static int BUFFER_SIZE = 4096;
+	//private final static int BUFFER_SIZE = 4096;
+	private final static int BUFFER_SIZE = 2646000 * 4;
 
 	private final static int FMT_CHUNK_ID = 0x20746D66;
 	private final static int DATA_CHUNK_ID = 0x61746164;
@@ -333,13 +334,14 @@ public class WavFile2
 	// --------------------------
 	private byte[] writeSample(long val) throws IOException
 	{
+		//System.out.println(val);
 		for (int b=0 ; b<bytesPerSample ; b++)
 		{
-			if (bufferPointer == BUFFER_SIZE)
-			{
-				oStream.write(buffer, 0, BUFFER_SIZE);
-				bufferPointer = 0;
-			}
+//			if (bufferPointer == BUFFER_SIZE)
+//			{
+//				oStream.write(buffer, 0, BUFFER_SIZE);
+//				bufferPointer = 0;
+//			}
 
 			buffer[bufferPointer] = (byte) (val & 0xFF);
 			val >>= 8;
@@ -630,7 +632,7 @@ public class WavFile2
 
 		for (int f=0 ; f<numFramesToWrite ; f++)
 		{
-			if (frameCounter == numFrames) return f;
+			//if (frameCounter == numFrames) return f;
 
 			byte[] frame = new byte[4];
 			for (int c=0 ; c<numChannels ; c++)
@@ -643,6 +645,7 @@ public class WavFile2
 				offset ++;
 			}
 			sourceDataLine.write(frame, 0, 4);
+			//sourceDataLine.flush();
 
 			frameCounter ++;
 		}
