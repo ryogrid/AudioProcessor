@@ -99,13 +99,14 @@ for(var i=0;i<frame_num;i++){
     }
     val += v << (b * 8);
   }
+
   // if(val > 9223372036854775807){
   //   var diff = val - 9223372036854775807;
   //   val = -9223372036854775807 + diff;
   // }
 
-  //inputBuffer[i] = floatOffset + val / floatScale;
-  inputBuffer[i] = val;
+  inputBuffer[i] = floatOffset + val / floatScale;
+  //inputBuffer[i] = val;
   // if(val != 0.0){
   //   console.log(inputBuffer[i]);
   // }
@@ -138,8 +139,8 @@ denoise_main(inputBuffer, outputBuffer);
 floatScale = 32767; //9223372036854775807L >> (64 - 12)
 var write_buf = new Buffer(frame_num*2);
 for(var i=0;i<outputBuffer.length;i++){
-  //var gen = Math.round(floatScale * floatScale * outputBuffer[i]);
   var gen = Math.round(floatScale * outputBuffer[i]);
+  //var gen = Math.round(floatScale * outputBuffer[i]);
   //console.log(outputBuffer[i]);
   //console.log(gen);
   for (var b=0;b<2;b++){
