@@ -88,7 +88,8 @@ for(var i = 0; i < all_buffersize; i++){
 }
 
 var floatOffset = 0;
-var floatScale = 1 << (16 - 1);
+//var floatScale = 1 << (16 - 1);
+var floatScale = 32768;
 for(var i=0;i<frame_num;i++){
   var val = 0;
   for(var b=0;b<2;b++){
@@ -102,7 +103,10 @@ for(var i=0;i<frame_num;i++){
   //   var diff = val - 9223372036854775807;
   //   val = -9223372036854775807 + diff;
   // }
-  inputBuffer[i] = floatOffset + val / floatScale;
+
+//  inputBuffer[i] = floatOffset + val / floatScale;
+  inputBuffer[i] = val;
+
   // if(inputBuffer[i] != 0){
   //   console.log(inputBuffer[i]);
   // }
@@ -127,7 +131,7 @@ denoise_main(inputBuffer, outputBuffer);
 // }
 
 //9007199254740991 //Number.MAX_SAFE_INTEGER
-floatScale = 2047; //9223372036854775807L >> (64 - 12)
+floatScale = 32767; //9223372036854775807L >> (64 - 12)
 var write_buf = new Buffer(frame_num*2);
 for(var i=0;i<outputBuffer.length;i++){
   var gen = Math.round(floatScale * outputBuffer[i]);
@@ -163,7 +167,7 @@ for(var i=0;i<write_buf.length;i+=2){
 // }
 
 
-var wstream = fs.createWriteStream('./asakai32_transform.wav');
+var wstream = fs.createWriteStream('./asakai60_transform.wav');
 wstream.write(headerBuf, (err) => {
     if (err) throw err;
     console.log('The file has been saved!');
