@@ -4,7 +4,6 @@ var NOISE = require("./noise");
 require("./demo");
 require("./ffmap");
 var fs = require('fs');
-const { Float16Array, getFloat16, setFloat16, hfround } = require("@petamoriken/float16");
 
 var Module = null;
 
