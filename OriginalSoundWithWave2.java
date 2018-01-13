@@ -3,7 +3,7 @@ import java.util.Arrays;
 import java.io.*;
 import javax.sound.sampled.*;
 
-public class DenoisedTxtSound {
+public class OriginalSoundWithWave2 {
 
 	public static void main(String[] args) {
 		try {
@@ -42,25 +42,17 @@ public class DenoisedTxtSound {
 			WavFile2 output = WavFile2.newWavFile(new File(justName + "_txt.wav"), numChannels, numFrames,
 					validBits, fs);
 			
-			BufferedReader bio = new BufferedReader(new FileReader("../pyssp_mod/samples60_pyssp_mmsestsa.txt"));
-			String splited_str = bio.readLine();
-			
-			String[] splited = splited_str.split(",");
-			
-//			double[] buffer = new double[splited.length];
-//			
-//			for(int i=0;i<splited.length;i++) {
-//				buffer[i] = Double.parseDouble(splited[i]);
-//			}
-//			output.writeFrames(buffer, buffer.length);
+			int framesRead;
+			double [] sample_arr = new double[samples];
+            framesRead = wavFile.readFrames(sample_arr, numFrames);
 			
 			double [] buffer = new double[4];
 			
-			for(int i=0;i<splited.length;i+=4) {
-				buffer[i%4] = Double.parseDouble(splited[i]);
-				buffer[i%4+1] = Double.parseDouble(splited[i+1]);
-				buffer[i%4+2] = Double.parseDouble(splited[i+2]);
-				buffer[i%4+3] = Double.parseDouble(splited[i+3]);
+			for(int i=0;i<sample_arr.length;i+=4) {
+				buffer[i%4] = sample_arr[i];
+				buffer[i%4+1] = sample_arr[i+1];
+				buffer[i%4+2] = sample_arr[i+2];
+				buffer[i%4+3] = sample_arr[i+3];
 				output.writeFrames(buffer, 2);
 			}
 			

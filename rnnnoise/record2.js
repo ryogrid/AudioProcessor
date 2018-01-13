@@ -103,7 +103,7 @@ for(var i=0;i<frame_num;i++){
     val += v << (b * 8);
   }
   inputBuffer[i] = floatOffset + val / floatScale;
-  console.log(inputBuffer[i]);
+  //console.log(inputBuffer[i]);
 }
 
   // if(val > 9223372036854775807){
@@ -125,6 +125,7 @@ for(var i=0;i<frame_num;i++){
 
 
 denoise_main(inputBuffer, outputBuffer);
+//outputBuffer = inputBuffer;
 
 // for(var i=0;i<bufferSize;i+=4){
 //   console.log(i.toString() + ":" + i);
@@ -157,10 +158,14 @@ for(var i=0;i<outputBuffer.length;i++){
 var write_buf2 = new Buffer(frame_num*4);
 var buf_pointer = 0;
 for(var i=0;i<write_buf.length;i+=2){
-  write_buf2[buf_pointer] = write_buf[i];
-  write_buf2[buf_pointer+1] = write_buf[i+1];
-  write_buf2[buf_pointer+2] = write_buf[i];
-  write_buf2[buf_pointer+3] = write_buf[i+1];
+  // write_buf2[buf_pointer] = write_buf[i];
+  // write_buf2[buf_pointer+1] = write_buf[i+1];
+  // write_buf2[buf_pointer+2] = write_buf[i];
+  // write_buf2[buf_pointer+3] = write_buf[i+1];
+  write_buf2[buf_pointer] = 0;
+  write_buf2[buf_pointer+1] = 0;
+  write_buf2[buf_pointer+2] = 0;
+  write_buf2[buf_pointer+3] = 0;  
   buf_pointer+=4;
 }
 
